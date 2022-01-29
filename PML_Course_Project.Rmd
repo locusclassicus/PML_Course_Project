@@ -1,0 +1,105 @@
+---
+title: "PML_Course_Project"
+output: 
+  html_document: 
+    keep_md: yes
+bibliography: references.bib
+---
+
+## Outline
+
+While many modern devices enable to collect a large amount of data about personal activity relatively inexpensively, enthusiasts of the quantified self movement rarely quantify how well they do particular activities. 
+
+In this project, we use data from accelerometers on the belt, forearm, arm, and dumbell of 6 experiment participants trying to predict if they performed barbell lifts correctly or incorrectly. The variable we need to predict is the "classe" variable in the training set. 
+
+The original TrainData was split into train and validation sets, and model evaluation was done on the validation set to avoid overfitting. Our experiments show that traditional classification tree gives the worst result, while bagging and random forests both offer high accuracy, with random forests being the most effective classification algorithm.
+
+All data comes from this source: <http://groupware.les.inf.puc-rio.br/har>. Most of the methods adopted here come from [@james2013a] (see chapter 8 "Tree-based Methods").
+
+## Download and Prepare the Data
+```{r eval=FALSE}
+urlTrain <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+urlTest <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+download.file(urlTrain, destfile = "TrainData.csv")
+download.file(urlTest, destfile = "TestData.csv")
+```
+```{r}
+TrainData <- read.csv("TrainData.csv")
+TestData <- read.csv("TestData.csv")
+```
+Visual inspection of the data shows that cols 1-7 contain information unnecessary for prediction, such as user name etc. We also remove cols with zero or close to zero variance and cols that have over 60% missing values.
+```{r message=FALSE}
+TrainData <- TrainData[,-c(1:7)]
+TestData <- TestData[, -c(1:7)]
+library(caret)
+nzv <- nearZeroVar(TrainData)
+TrainData <- TrainData[, -nzv]
+TestData <- TestData[, -nzv]
+notDeficient <-colSums(is.na(TrainData)) <= 0.6*nrow(TrainData)
+TrainData<- TrainData[, notDeficient] 
+TestData <- TestData[, notDeficient] 
+```
+The remaining observations are all complete:
+```{r}
+sum(complete.cases(TrainData)) == nrow(TrainData)
+```
+We finally find the class we need to predict and transform it into factor, and split our TrainData into **Train** and **Validation Sets**.
+```{r}
+TrainData$classe <- as.factor(TrainData$classe)
+levels(TrainData$classe)
+set.seed(1234)
+inTrain <- createDataPartition(y = TrainData$classe, p=.6, list=FALSE)
+subtrain <- TrainData[inTrain, ]
+subvalid <- TrainData[-inTrain,]
+```
+
+## Classification tree
+We first use classification trees to analyze the data set.
+```{r message=FALSE}
+## classification tree
+library(tree)
+tree.train <- tree(classe ~ ., subtrain)
+sum.tree.train <- summary(tree.train)
+## train data error
+sum.tree.train$misclass ## 0.32%
+## validation data error
+tree.valid <- predict(tree.train, subvalid, type = "class")
+table(tree.valid, subvalid$classe)
+1 - ((1842+748+909+938+777)/7846) ## 0.34%
+```
+As expected, the error is even higher on the validation set. We have performed cross-validation using the cv.tree() function to find the optimal number of terminal nodes, but this has not lead to any improvement of the accuracy.
+
+## Bagging
+Next, we apply bagging to our data, using the randomForest package in R. Since bagging is simply a special case of a random forest with m = p, the randomForest() function can be used to perform both random forests and bagging. The argument mtry specifies that all predictoris should be considered for each split of the tree - in other words, that bagging should be done.
+```{r message=FALSE}
+library(randomForest)
+set.seed(1234)
+bag.train <- randomForest(classe ~ ., data = subtrain, mtry = 52, importance = TRUE)
+bag.train
+```
+The confusion matrix suggests a significantly improved accuracy for each class, the classification error on the training data being about 2%
+```{r}
+1 - ((3321+2219+2007+1874+2141)/11776)
+```
+As usual, we calculate accuracy on the validation set as well; the result is even slightly better.
+```{r}
+yhat.bag <- predict(bag.train, newdata = subvalid)
+table(yhat.bag, subvalid$classe)
+1 - ((2224+1491+1337+1266+1430)/7846) 
+```
+Let us see if we can improve accuracy even better using random forests.
+
+## Random Forests
+By default, randomForest() uses p/3 variables when building a random forest of regression trees, and sqrt(p) when building a random forest of classification trees. In our case, sqrt(52) = 7.2, so we shall use 7 variables. The error estimated on the validation set is even smaller than that obtrained with bagging. 
+
+```{r}
+set.seed(1234)
+rf.train <- randomForest(classe ~ ., data = subtrain, mtry = 7, importance = TRUE)
+rf.train
+## validation
+yhat.rf <- predict(rf.train, newdata = subvalid)
+table(yhat.rf, subvalid$classe)
+1 - ((2230+1506+1357+1274+1430)/7846)
+```
+
+## References
