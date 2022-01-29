@@ -115,28 +115,6 @@ Next, we apply bagging to our data, using the randomForest package in R. Since b
 
 ```r
 library(randomForest)
-```
-
-```
-## randomForest 4.6-14
-```
-
-```
-## Type rfNews() to see new features/changes/bug fixes.
-```
-
-```
-## 
-## Attaching package: 'randomForest'
-```
-
-```
-## The following object is masked from 'package:ggplot2':
-## 
-##     margin
-```
-
-```r
 set.seed(1234)
 bag.train <- randomForest(classe ~ ., data = subtrain, mtry = 52, importance = TRUE)
 bag.train

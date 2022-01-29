@@ -254,15 +254,8 @@ table(tree.valid, subvalid$classe)</code></pre>
 <div id="bagging" class="section level2">
 <h2>Bagging</h2>
 <p>Next, we apply bagging to our data, using the randomForest package in R. Since bagging is simply a special case of a random forest with m = p, the randomForest() function can be used to perform both random forests and bagging. The argument mtry specifies that all predictoris should be considered for each split of the tree - in other words, that bagging should be done.</p>
-<pre class="r"><code>library(randomForest)</code></pre>
-<pre><code>## randomForest 4.6-14</code></pre>
-<pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
-<pre><code>## 
-## Attaching package: &#39;randomForest&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:ggplot2&#39;:
-## 
-##     margin</code></pre>
-<pre class="r"><code>set.seed(1234)
+<pre class="r"><code>library(randomForest)
+set.seed(1234)
 bag.train &lt;- randomForest(classe ~ ., data = subtrain, mtry = 52, importance = TRUE)
 bag.train</code></pre>
 <pre><code>## 
