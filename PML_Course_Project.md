@@ -12,7 +12,7 @@ While many modern devices enable to collect a large amount of data about persona
 
 In this project, we use data from accelerometers on the belt, forearm, arm, and dumbell of 6 experiment participants trying to predict if they performed barbell lifts correctly or incorrectly. The variable we need to predict is the "classe" variable in the training set. 
 
-The original TrainData was split into train and validation sets, and model evaluation was done on the validation set to avoid overfitting. Out experiments show that traditional classification tree gives the worst result, while bagging and random forests both offer high accuracy, with random forests being the most effective classification algorithm.
+The original TrainData was split into train and validation sets, and model evaluation was done on the validation set to avoid overfitting. Our experiments show that traditional classification tree gives the worst result, while bagging and random forests both offer high accuracy, with random forests being the most effective classification algorithm.
 
 All data comes from this source: <http://groupware.les.inf.puc-rio.br/har>. Most of the methods adopted here come from [@james2013a] (see chapter 8 "Tree-based Methods").
 
